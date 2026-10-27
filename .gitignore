@@ -3,4 +3,5 @@ downloads/*
 go.sum
 logs/*
 NotYet/*
+plots/*
 .idea/*

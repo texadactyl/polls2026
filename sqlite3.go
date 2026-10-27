@@ -92,6 +92,15 @@ var (
 		colEndMonth, colEndDay)
 
 	// Select all history rows, grouped by state, end month (descending), and day (descending).
+	fmtSqlSelectHistoryByStateAscendingDates = fmt.Sprintf(
+		"SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = '%%s' ORDER BY %s, %s",
+		colState, colDem, colGop, colInd, colUnk, colStartMonth, colStartDay, colEndMonth, colEndDay, colPollster,
+		// from TABLE where FIELD = VALUE
+		tableHistory, colState,
+		// order by FIELD1, FIELD2
+		colEndMonth, colEndDay)
+
+	// Select all history rows, grouped by state, end month (descending), and day (descending).
 	fmtSqlSelectHistoryInOct = fmt.Sprintf(
 		"SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s > 0 ORDER BY %s",
 		colState, colDem, colGop, colInd, colUnk, colStartMonth, colStartDay, colEndMonth, colEndDay, colPollster,

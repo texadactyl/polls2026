@@ -7,7 +7,7 @@ reportByState - Report all history records for the given state.
 */
 func reportByState(stateCode string) {
 
-	// Quick return if database is closed.
+	// Error if database is closed.
 	if !dbIsOpen {
 		fatalText("reportByState: database is closed")
 	}
@@ -29,9 +29,6 @@ func reportByState(stateCode string) {
 	fmt.Printf("\t-----  ----   --  --   --   --   --  --------\n")
 
 	for _, historyRcd := range histories {
-		if historyRcd.endMonth < 10 {
-			continue
-		}
 		fmt.Printf("\t%02d/%02d  %02d/%02d  %s  %02.0f   %02.0f   %02.0f   %02.0f  %s\n",
 			historyRcd.startMonth,
 			historyRcd.startDay,

@@ -17,6 +17,7 @@ func showHelp() {
 	fmt.Printf("\t-l : Load updated polls into the database.\n")
 	fmt.Printf("\t-r 1 ST : Given state code ST, report Democrat, GOP, Independent, and undecided results.\n")
 	fmt.Printf("\t-r 2 PCT : Run a mock poll of polls based on last Oct polls. The PCT is added to the GOP total if there is sufficient Unknown\n")
+	fmt.Printf("\t-p ST : Given state code ST, plot Democrat, GOP, Independent, and undecided results.\n")
 	fmt.Printf("\t-v : Verbose console output.\n")
 	fmt.Print("\n")
 	os.Exit(0)
@@ -56,6 +57,7 @@ func main() {
 	flagLoad := false          // -l
 	flagReportByState := false // -r 1 ST
 	flagPollOfPolls := false   // -r 2 PCT
+	flagPlotByState := false   // -p ST
 
 	// Positioned in the tree top directory?
 	verFile, err = os.Open("VERSION.cfg")
@@ -112,6 +114,15 @@ func main() {
 				showHelp()
 			}
 
+		case "-p":
+			ii++
+			if ii >= len(args) {
+				logError("Missing -p <state code>")
+				showHelp()
+			}
+			flagPlotByState = true
+			stateCode = strings.ToUpper(args[ii])
+
 		case "-v":
 			flagVerbose = true
 
@@ -157,6 +168,10 @@ func main() {
 
 	if flagPollOfPolls {
 		pollOfPolls("", gopPctIncrement)
+	}
+
+	if flagPlotByState {
+		plotByState(stateCode, startStamp)
 	}
 
 	logger("End")
