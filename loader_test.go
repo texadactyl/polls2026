@@ -33,7 +33,7 @@ func TestLoader_Success(t *testing.T) {
 	defer server.Close()
 
 	tempDir := t.TempDir()
-	startStamp := "2026-10-27_15:30:00"
+	startStamp := "2026-10-27_153000"
 
 	loader(startStamp, tempDir, server.URL)
 
@@ -95,7 +95,7 @@ func TestLoader_DuplicatesAndDiscards(t *testing.T) {
 	defer server1.Close()
 
 	tempDir := t.TempDir()
-	loader("2026-10-27_10:00:00", tempDir, server1.URL)
+	loader("2026-10-27_100000", tempDir, server1.URL)
 
 	// Load second time with 1 existing record and 1 new record
 	content2 := "CA 55 40 00 Oct 01 Oct 05 PollsterOne\n" + // duplicate hash
@@ -107,7 +107,7 @@ func TestLoader_DuplicatesAndDiscards(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	loader("2026-10-27_11:00:00", tempDir, server2.URL)
+	loader("2026-10-27_110000", tempDir, server2.URL)
 
 	// Verify total count for CA is still 1
 	caRecords, ok := query(fmt.Sprintf(fmtSqlSelectHistoryByState, "CA"))
@@ -140,7 +140,7 @@ func TestLoader_WindowsLineEndings(t *testing.T) {
 	defer server.Close()
 
 	tempDir := t.TempDir()
-	loader("2026-10-27_12:00:00", tempDir, server.URL)
+	loader("2026-10-27_120000", tempDir, server.URL)
 
 	ohRecords, ok := query(fmt.Sprintf(fmtSqlSelectHistoryByState, "OH"))
 	if !ok || len(ohRecords) != 1 {
