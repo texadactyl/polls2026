@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -37,8 +38,13 @@ func main() {
 	var verFile *os.File
 
 	// Get the string timestamp and zone for the current time in the default locale.
+	var startStamp string
 	var startTime = time.Now() // Get the current time.
-	var startStamp = startTime.Format("2006-01-02_15:04:05")
+	if runtime.GOOS == "windows" {
+		startStamp = startTime.Format("2006-01-02_150405")
+	} else {
+		startStamp = startTime.Format("2006-01-02_15:04:05")
+	}
 	var logFileName = fmt.Sprintf("%s.log", startStamp)
 
 	// Open log file and defer closing.
