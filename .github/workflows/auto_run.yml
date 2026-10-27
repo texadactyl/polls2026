@@ -1,0 +1,53 @@
+name: Auto build and run polls2026 on 3 O/Ses
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.py'
+      - '**.txt'
+      - '**.yml'
+    branches: [ "main" ]
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.py'
+      - '**.txt'
+      - '**.yml'
+    branches: [ "main" ]
+
+jobs:
+
+  build_and_test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup Go
+      uses: actions/setup-go@v7
+      with:
+          go-version: '1.27.x'
+          cache: true
+          cache-dependency-path: "**/go.sum"
+          
+    - name: Setup polls2026
+      run: |
+        go get
+        go build -o . -v ./...
+        ./polls2026 -h
+
+   - name: Run Unit Tests
+      run: |
+        go test -v .
+
+   - name: Run command lines
+      run: |
+        ./polls2026 -l
+        ./polls2026 -r 1 AK
+        ./polls2026 -r 2 0
+
+
