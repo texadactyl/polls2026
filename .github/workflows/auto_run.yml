@@ -47,5 +47,6 @@ jobs:
         ./polls2026 -l
         ./polls2026 -r 1 AK
         ./polls2026 -r 2 0
+        ./polls2026 -p AK
 
 
