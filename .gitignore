@@ -1,0 +1,4 @@
+database/*
+downloads/*
+go.sum
+logs/*
