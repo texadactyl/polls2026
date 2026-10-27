@@ -11,9 +11,13 @@ import (
 func TestSqliteOperations(t *testing.T) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	t.Logf("dbPath: %s", dbPath)
+	absDbPath, err := filepath.Abs(dbPath)
+	if err != nil {
+		t.Fatalf("filepath.Abs failed for %s: %v", dbPath, err)
+	}
+	t.Logf("dbPath: %s", absDbPath)
 
-	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", dbPath)
+	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", absDbPath)
 	handle, err := sql.Open(driverDatabase, dsn)
 	if err != nil {
 		t.Fatalf("sql.Open failed: %v", err)
@@ -66,8 +70,8 @@ func TestSqliteOperations(t *testing.T) {
 	}
 
 	DBClose()
-	err = os.Remove(dbPath)
+	err = os.Remove(absDbPath)
 	if err != nil {
-		t.Fatalf("failed to remove database file(%s): %v", dbPath, err)
+		t.Fatalf("failed to remove database file(%s): %v", absDbPath, err)
 	}
 }

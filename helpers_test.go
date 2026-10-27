@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"slices"
@@ -164,5 +166,27 @@ func TestMakeDirAndStoreTextAndWriteOutputText(t *testing.T) {
 	}
 	if !strings.Contains(string(outContent), "line 1") {
 		t.Fatalf("unexpected content in out.txt: %q", string(outContent))
+	}
+}
+
+func TestUrlGet(t *testing.T) {
+	content := "test content for urlGet\nline 2"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(content))
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	outPath := filepath.Join(tempDir, "downloaded.txt")
+
+	urlGet(server.URL, outPath)
+
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("failed to read downloaded file: %v", err)
+	}
+	if string(data) != content {
+		t.Fatalf("expected content %q, got %q", content, string(data))
 	}
 }
