@@ -2,3 +2,5 @@ database/*
 downloads/*
 go.sum
 logs/*
+NotYet/*
+.idea/*
