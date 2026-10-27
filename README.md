@@ -11,6 +11,8 @@ git clone https://github.com/texadactyl/polls2026
 cd polls2026
 <br>
 go install .
+<br>
+(or, go build -o `<somewhere in the path> .`)
 
 ### Verification
 
