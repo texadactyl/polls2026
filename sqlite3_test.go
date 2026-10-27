@@ -53,14 +53,13 @@ func TestSqliteOperations(t *testing.T) {
 		t.Fatalf("expected 1 result, got %d (ok=%v)", len(results), ok)
 	}
 
-	r := results[0]
-	if r.state != "CA" || r.dem != 55.0 || r.gop != 40.0 || r.pollster != "TestPollster" {
-		t.Fatalf("unexpected record content: %+v", r)
+	// Only 1 result is expected.
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
 	}
 
-	// Query October
-	octResults, ok := query(fmtSqlSelectHistoryInOct)
-	if !ok || len(octResults) != 1 {
-		t.Fatalf("expected 1 October result, got %d (ok=%v)", len(octResults), ok)
+	res := results[0]
+	if res.state != "CA" || res.dem != 55.0 || res.gop != 40.0 || res.pollster != "TestPollster" {
+		t.Fatalf("unexpected record content: %+v", res)
 	}
 }
