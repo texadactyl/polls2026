@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -10,6 +11,7 @@ import (
 func TestSqliteOperations(t *testing.T) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
+	t.Logf("dbPath: %s", dbPath)
 
 	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", dbPath)
 	handle, err := sql.Open(driverDatabase, dsn)
@@ -61,5 +63,11 @@ func TestSqliteOperations(t *testing.T) {
 	res := results[0]
 	if res.state != "CA" || res.dem != 55.0 || res.gop != 40.0 || res.pollster != "TestPollster" {
 		t.Fatalf("unexpected record content: %+v", res)
+	}
+
+	DBClose()
+	err = os.Remove(dbPath)
+	if err != nil {
+		t.Fatalf("failed to remove database file(%s): %v", dbPath, err)
 	}
 }
