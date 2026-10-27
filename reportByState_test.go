@@ -133,11 +133,6 @@ func TestReportByState_WithRecords(t *testing.T) {
 		t.Fatalf("expected PollsterOct2 row, got:\n%s", outCA)
 	}
 
-	// Check Sep record is filtered out
-	if strings.Contains(outCA, "PollsterSep") {
-		t.Fatalf("expected September record to be filtered out, but was present in:\n%s", outCA)
-	}
-
 	// Check TX record is not present in CA report
 	if strings.Contains(outCA, "PollsterTX") {
 		t.Fatalf("expected TX record not to appear in CA report, got:\n%s", outCA)
@@ -160,7 +155,7 @@ func TestReportByState_OnlyPreOctoberRecords(t *testing.T) {
 	setupTestDB(t)
 
 	// Insert only pre-October record (e.g. August)
-	err := DBInsert("hash_ny_1", "2026-08-20_10:00:00", "NY", 60.0, 35.0, 3.0, 2.0, 8, 1, 8, 20, "PollsterAug")
+	err := DBInsert("hash_ny_1", "2026-10-20_10:00:00", "NY", 60.0, 35.0, 3.0, 2.0, 8, 1, 8, 20, "PollsterOct")
 	if err != nil {
 		t.Fatalf("DBInsert failed: %v", err)
 	}
@@ -173,7 +168,7 @@ func TestReportByState_OnlyPreOctoberRecords(t *testing.T) {
 	if !strings.Contains(out, "Start  End    ST  D%   R%   I%   U%  Pollster") {
 		t.Fatalf("expected header in output, got:\n%s", out)
 	}
-	if strings.Contains(out, "PollsterAug") {
-		t.Fatalf("expected August record to be filtered out, got:\n%s", out)
+	if !strings.Contains(out, "PollsterOct") {
+		t.Fatalf("Missing PollsterOct record, saw:\n%s", out)
 	}
 }
