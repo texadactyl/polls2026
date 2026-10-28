@@ -20,11 +20,7 @@ go install .
 
 go test -v .
 <br>
-polls2026 -l
-<br>
-polls2026 -r 1 AK
-<br>
-polls2026 -r 2 0
+./bash/runner.sh
 
 ### Documentation
 
