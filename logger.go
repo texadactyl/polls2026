@@ -21,6 +21,9 @@ func openLogFile(dirPath string, logFileName string) {
 		fatalErr(err, "OpenLogFilePath: isDirectory(%s) failed", dirPath)
 	}
 
+	// If a previous log is still open, close it.
+	closeLogFile()
+
 	// Create the log file.
 	fullPath := filepath.Join(dirPath, logFileName)
 	logFileHandle, err = os.Create(fullPath)
