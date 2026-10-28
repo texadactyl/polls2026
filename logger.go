@@ -32,8 +32,12 @@ func openLogFile(dirPath string, logFileName string) {
 // closeLogFile - Close the log file.
 func closeLogFile() {
 	if logFileHandle != nil {
-		_ = logFileHandle.Close()
+		err := logFileHandle.Close()
+		if err != nil {
+			fatalErr(err, "CloseLogFile: logFileHandle.Close() failed")
+		}
 	}
+	logFileHandle = nil
 }
 
 // logger - Time-stamp log function.
