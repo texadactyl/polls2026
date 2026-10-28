@@ -1,81 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"database/sql"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
-// captureOutput captures stdout output generated while executing fn.
-func captureOutput(t *testing.T, fn func()) string {
-	t.Helper()
-
-	oldStdout := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("os.Pipe failed: %v", err)
-	}
-	os.Stdout = w
-
-	outChan := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		outChan <- buf.String()
-	}()
-
-	fn()
-
-	_ = w.Close()
-	os.Stdout = oldStdout
-	out := <-outChan
-	_ = r.Close()
-
-	return out
-}
-
-func setupTestDB(t *testing.T) {
-	t.Helper()
-
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
-	absDbPath, err := filepath.Abs(dbPath)
-	if err != nil {
-		t.Fatalf("filepath.Abs failed for %s: %v", dbPath, err)
-	}
-
-	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", absDbPath)
-	handle, err := sql.Open(driverDatabase, dsn)
-	if err != nil {
-		t.Fatalf("sql.Open failed: %v", err)
-	}
-
-	prevHandle := dbHandle
-	prevIsOpen := dbIsOpen
-	t.Cleanup(func() {
-		DBClose()
-		dbHandle = prevHandle
-		dbIsOpen = prevIsOpen
-		if err := os.Remove(absDbPath); err != nil && !os.IsNotExist(err) {
-			t.Errorf("failed to remove database file (%s): %v", absDbPath, err)
-		}
-	})
-
-	dbHandle = handle
-	dbIsOpen = true
-
-	if err := sqlFunc(fmtSqlCreateHistory); err != nil {
-		t.Fatalf("failed to create history table: %v", err)
-	}
-}
-
 func TestReportByState_NoRecords(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 
 	out := captureOutput(t, func() {
 		reportByState("NV")
@@ -88,7 +19,7 @@ func TestReportByState_NoRecords(t *testing.T) {
 }
 
 func TestReportByState_WithRecords(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 
 	// Insert test records
 	// CA record 1 in October (endMonth=10, endDay=15)
@@ -152,7 +83,7 @@ func TestReportByState_WithRecords(t *testing.T) {
 }
 
 func TestReportByState_OnlyPreOctoberRecords(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 
 	// Insert only pre-October record (e.g. August)
 	err := DBInsert("hash_ny_1", "2026-10-20_10:00:00", "NY", 60.0, 35.0, 3.0, 2.0, 8, 1, 8, 20, "PollsterOct")

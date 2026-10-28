@@ -61,8 +61,9 @@ func pollOfPolls(stateCode string, gopPctIncrement float64) {
 		return
 	}
 
-	fmt.Printf("\n\tST    D%%      R%%      I%%      U%%\n")
-	fmt.Printf("\t--  -----   -----   -----   -----\n")
+	fmt.Println()
+	logger("\tST    D%%      R%%      I%%      U%%")
+	logger("\t--  -----   -----   -----   -----")
 	currentStateCode := "" // force changing states for the first encountered history record.
 
 	for _, historyRcd := range histories {
@@ -103,10 +104,10 @@ func pollOfPolls(stateCode string, gopPctIncrement float64) {
 	appendWinner(&winner, currentStateCode, totals)
 
 	fmt.Println()
-	fmt.Printf("Dem winners (%d): %s\n", winner.demCount, winner.demString)
-	fmt.Printf("GOP winners (%d): %s\n", winner.gopCount, winner.gopString)
-	fmt.Printf("Ind winners (%d): %s\n", winner.indCount, winner.indString)
-	fmt.Printf("Unk winners (%d): %s\n", winner.unkCount, winner.unkString)
+	logger("Dem winners (%d): %s", winner.demCount, winner.demString)
+	logger("GOP winners (%d): %s", winner.gopCount, winner.gopString)
+	logger("Ind winners (%d): %s", winner.indCount, winner.indString)
+	logger("Unk winners (%d): %s", winner.unkCount, winner.unkString)
 	fmt.Println()
 
 }
@@ -130,7 +131,7 @@ func pollStateResultEmit(stateCode string, totals *typeStateTotals, gopPctIncrem
 		totals.unk -= gopPctIncrement
 	}
 
-	fmt.Printf("\t%s  %05.2f   %05.2f   %05.2f   %05.2f\n",
+	logger("\t%s  %05.2f   %05.2f   %05.2f   %05.2f",
 		stateCode,
 		totals.dem,
 		totals.gop,

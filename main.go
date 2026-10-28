@@ -34,23 +34,14 @@ func main() {
 	var args []string
 	var versionString string
 	var err error
-	stateCode := "rubbish!"
+	stateCode := "all"
+	funk := "TBD"
 	var gopPctIncrement float64
 	var verFile *os.File
 
 	// Get the string timestamp and zone for the current time in the default locale.
 	var startStamp string
 	var startTime = time.Now() // Get the current time.
-	if runtime.GOOS == "windows" {
-		startStamp = startTime.Format("2006-01-02_150405")
-	} else {
-		startStamp = startTime.Format("2006-01-02_15:04:05")
-	}
-	var logFileName = fmt.Sprintf("%s.log", startStamp)
-
-	// Open log file and defer closing.
-	openLogFile(PathDirLogs, logFileName)
-	defer closeLogFile()
 
 	// Flags
 	flagVerbose := false       // -v
@@ -77,6 +68,7 @@ func main() {
 
 	// Parse command line arguments.
 	for ii := 0; ii < len(args); ii++ {
+
 		switch args[ii] {
 
 		case "-h":
@@ -84,6 +76,7 @@ func main() {
 
 		case "-l":
 			flagLoad = true
+			funk = "load"
 
 		case "-r":
 			ii++
@@ -92,7 +85,9 @@ func main() {
 				showHelp()
 			}
 			arg := args[ii]
+
 			switch arg {
+
 			case "1":
 				ii++
 				if ii >= len(args) {
@@ -101,6 +96,8 @@ func main() {
 				}
 				flagReportByState = true
 				stateCode = strings.ToUpper(args[ii])
+				funk = "reportByState"
+
 			case "2":
 				ii++
 				if ii >= len(args) {
@@ -109,6 +106,8 @@ func main() {
 				}
 				flagPollOfPolls = true
 				gopPctIncrement = stringToFloat64(args[ii], "GOP pct increment")
+				funk = "pollOfPolls"
+
 			default:
 				logError("Unrecognizable -r argument: %s", args[ii])
 				showHelp()
@@ -122,6 +121,7 @@ func main() {
 			}
 			flagPlotByState = true
 			stateCode = strings.ToUpper(args[ii])
+			funk = "plotByState"
 
 		case "-v":
 			flagVerbose = true
@@ -132,6 +132,18 @@ func main() {
 		}
 
 	}
+
+	// Develop the log file name.
+	if runtime.GOOS == "windows" {
+		startStamp = startTime.Format("2006-01-02_150405")
+	} else {
+		startStamp = startTime.Format("2006-01-02_15:04:05")
+	}
+	var logFileName = fmt.Sprintf(funk + "_" + stateCode + "_%s.log", startStamp)
+
+	// Open log file and defer closing.
+	openLogFile(PathDirLogs, logFileName)
+	defer closeLogFile()
 
 	// Fetch and show the program version.
 	versionBytes, err := os.ReadFile(PathVersionCfg)

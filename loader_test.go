@@ -19,7 +19,7 @@ func setupTestLog(t *testing.T) {
 }
 
 func TestLoader_Success(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 	setupTestLog(t)
 
 	content := "ak 48 47 00 Oct 14 Oct 15 PPP\n" +
@@ -82,7 +82,7 @@ func TestLoader_Success(t *testing.T) {
 }
 
 func TestLoader_DuplicatesAndDiscards(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 	setupTestLog(t)
 
 	content1 := "CA 55 40 00 Oct 01 Oct 05 PollsterOne\n" +
@@ -127,7 +127,7 @@ func TestLoader_DuplicatesAndDiscards(t *testing.T) {
 }
 
 func TestLoader_WindowsLineEndings(t *testing.T) {
-	setupTestDB(t)
+	setupUnitTest(t)
 	setupTestLog(t)
 
 	// Test CRLF handling

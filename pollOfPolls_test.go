@@ -6,6 +6,9 @@ import (
 )
 
 func TestAppendWinner(t *testing.T) {
+
+	setupUnitTest(t)
+
 	// Zero count should be ignored
 	w := &typeWinner{}
 	appendWinner(w, "CA", typeStateTotals{count: 0})
@@ -39,6 +42,9 @@ func TestAppendWinner(t *testing.T) {
 }
 
 func TestPollStateResultEmit(t *testing.T) {
+
+	setupUnitTest(t)
+
 	// pollStateResultEmit should handle count < 1.0 gracefully without panic
 	pollStateResultEmit("CA", &typeStateTotals{count: 0}, 2.0)
 

@@ -1,6 +1,12 @@
 set -e
 
 rm -f plots/*
+rm -f logs/*
+
+polls2026 -l
+polls2026 -r 2 0
+polls2026 -r 2 2
+polls2026 -r 2 4
 polls2026 -p ak
 polls2026 -p fl
 polls2026 -p la

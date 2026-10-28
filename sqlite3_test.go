@@ -1,48 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestSqliteOperations(t *testing.T) {
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
-	absDbPath, err := filepath.Abs(dbPath)
-	if err != nil {
-		t.Fatalf("filepath.Abs failed for %s: %v", dbPath, err)
-	}
-	t.Logf("dbPath: %s", absDbPath)
-
-	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", absDbPath)
-	handle, err := sql.Open(driverDatabase, dsn)
-	if err != nil {
-		t.Fatalf("sql.Open failed: %v", err)
-	}
-
-	// Set dbHandle and dbIsOpen temporarily for query / DBInsert testing
-	prevHandle := dbHandle
-	prevIsOpen := dbIsOpen
-	defer func() {
-		dbHandle = prevHandle
-		dbIsOpen = prevIsOpen
-	}()
-
-	dbHandle = handle
-	dbIsOpen = true
-
-	// Create table
-	if err := sqlFunc(fmtSqlCreateHistory); err != nil {
-		t.Fatalf("failed to create history table: %v", err)
-	}
+	setupUnitTest(t)
 
 	// Insert record
 	hash := "testhash12345678"
 	stamp := "2026-10-26_10:00:00"
-	err = DBInsert(hash, stamp, "CA", 55.0, 40.0, 3.0, 2.0, 10, 15, 10, 20, "TestPollster")
+	err := DBInsert(hash, stamp, "CA", 55.0, 40.0, 3.0, 2.0, 10, 15, 10, 20, "TestPollster")
 	if err != nil {
 		t.Fatalf("DBInsert failed: %v", err)
 	}
@@ -69,9 +38,4 @@ func TestSqliteOperations(t *testing.T) {
 		t.Fatalf("unexpected record content: %+v", res)
 	}
 
-	DBClose()
-	err = os.Remove(absDbPath)
-	if err != nil {
-		t.Fatalf("failed to remove database file(%s): %v", absDbPath, err)
-	}
 }

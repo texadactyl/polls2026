@@ -45,13 +45,13 @@ func plotByState(stateCode string, startStamp string) {
 
 	// No histories: print a message and return.
 	if len(histories) < 1 {
-		fmt.Printf("\tplotByState: No history records were found for state %s\n", stateCode)
+		logger("\tplotByState: No history records were found for state %s", stateCode)
 		return
 	}
 
 	// One history record: print a message and return.
 	if len(histories) < 2 {
-		fmt.Printf("\tplotByState: Only 1 history record was found for state %s\n", stateCode)
+		logger("\tplotByState: Only 1 history record was found for state %s", stateCode)
 		return
 	}
 
@@ -171,6 +171,7 @@ func plotByState(stateCode string, startStamp string) {
 	if err != nil {
 		fatalErr(err, "plotByState: writePNG(%s) failed", pngPath)
 	}
+	logger("plotByState: PNG stored in %s", pngPath)
 
 }
 

@@ -25,11 +25,12 @@ func reportByState(stateCode string) {
 	}
 
 	// For each row retrieved, report the column values.
-	fmt.Printf("\n\tStart  End    ST  D%%   R%%   I%%   U%%  Pollster\n")
-	fmt.Printf("\t-----  ----   --  --   --   --   --  --------\n")
+	fmt.Println()
+	logger("\tStart  End    ST  D%%   R%%   I%%   U%%  Pollster")
+	logger("\t-----  ----   --  --   --   --   --  --------")
 
 	for _, historyRcd := range histories {
-		fmt.Printf("\t%02d/%02d  %02d/%02d  %s  %02.0f   %02.0f   %02.0f   %02.0f  %s\n",
+		logger("\t%02d/%02d  %02d/%02d  %s  %02.0f   %02.0f   %02.0f   %02.0f  %s",
 			historyRcd.startMonth,
 			historyRcd.startDay,
 			historyRcd.endMonth,

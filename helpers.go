@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -11,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 	"unicode"
 )
@@ -194,5 +197,89 @@ func monthStringToInt64(str string, fieldName string) int64 {
 	default:
 		fatalText("monthStringToInt64: unrecognizable month string: %s, field: %s", str, fieldName)
 		return -1 // never reached
+	}
+}
+
+// captureOutput captures stdout output generated while executing fn.
+func captureOutput(t *testing.T, fn func()) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	rdr, wrt, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe failed: %v", err)
+	}
+	os.Stdout = wrt
+
+	outChan := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, rdr)
+		outChan <- buf.String()
+	}()
+
+	fn()
+
+	_ = wrt.Close()
+	os.Stdout = oldStdout
+	out := <-outChan
+	_ = rdr.Close()
+
+	return out
+}
+
+func setupUnitTest(t *testing.T) {
+	t.Helper()
+
+	// tempDir = absolute path to the temp directory.
+	tempDir, err := filepath.Abs("./tempDir")
+	if err != nil {
+		t.Fatalf("setupUnitTest: failed to get absolute path for temp directory (./tempDir): %v", err)
+	}
+
+	// Ensure it does not yet exist.
+	err = os.RemoveAll(tempDir)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatalf("setupUnitTest: failed to remove temp directory (%s): %v", tempDir, err)
+	}
+
+	// Create the temp directory.
+	err = os.Mkdir(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("setupUnitTest os.Mkdir(%s) failed: %v", tempDir, err)
+	}
+
+	openLogFile(tempDir, "test.log")
+
+	dbPath := filepath.Join(tempDir, "test.db")
+	absDbPath, err := filepath.Abs(dbPath)
+	if err != nil {
+		t.Fatalf("setupUnitTest filepath.Abs failed for %s: %v", dbPath, err)
+	}
+
+	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)", absDbPath)
+	handle, err := sql.Open(driverDatabase, dsn)
+	if err != nil {
+		t.Fatalf("setupUnitTest: sql.Open failed: %v", err)
+	}
+
+	prevHandle := dbHandle
+	prevIsOpen := dbIsOpen
+	t.Cleanup(func() {
+		DBClose()
+		dbHandle = prevHandle
+		dbIsOpen = prevIsOpen
+		closeLogFile()
+		err := os.RemoveAll(tempDir)
+		if err != nil && !os.IsNotExist(err) {
+			t.Errorf("setupUnitTest: failed to remove temp directory (%s): %v", tempDir, err)
+		}
+	})
+
+	dbHandle = handle
+	dbIsOpen = true
+
+	if err := sqlFunc(fmtSqlCreateHistory); err != nil {
+		t.Fatalf("setupUnitTest: failed to create history table: %v", err)
 	}
 }
