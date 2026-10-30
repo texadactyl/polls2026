@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 
+const minEndMonth = 10
+
 // pollOfPolls structure for state totals.
 type typeStateTotals struct {
 	count float64
@@ -62,6 +64,7 @@ func pollOfPolls(stateCode string, gopPctIncrement float64) {
 	}
 
 	fmt.Println()
+	logger("\tGOP increment: %05.2f", gopPctIncrement)
 	logger("\tST    D%%      R%%      I%%      U%%")
 	logger("\t--  -----   -----   -----   -----")
 	currentStateCode := "" // force changing states for the first encountered history record.
@@ -72,7 +75,7 @@ func pollOfPolls(stateCode string, gopPctIncrement float64) {
 			continue // Yes, skip.
 		}
 		// Before October?
-		if historyRcd.endMonth < 10 {
+		if historyRcd.endMonth < minEndMonth {
 			continue // Yes, skip.
 		}
 
