@@ -31,14 +31,15 @@ type typeWinner struct {
 
 // Current Senate records.
 type typeSenateRecord struct {
-	stateCode string // state code (E.g. AK for Alaska)
-	holderA   string // dem or gop
-	holderB   string // dem or gop
-	upA       int64  // Senator A up for re-election?
-	upB       int64  // Senator B up for re-election?
+	holderA string // dem or gop
+	holderB string // dem or gop
+	upA     int64  // Senator A up for re-election?
+	upB     int64  // Senator B up for re-election?
 }
 
 var senateMap map[string]typeSenateRecord
+var senatorCountGop = int64(0)
+var senatorCountDem = int64(0)
 
 const pathFileCurrentSenate = "current_senate.txt"
 
@@ -128,6 +129,11 @@ func pollOfPolls(stateCode string, gopPctIncrement float64) {
 	logger("GOP winners (%d): %s", winner.gopCount, winner.gopString)
 	logger("Ind winners (%d): %s", winner.indCount, winner.indString)
 	logger("Unk winners (%d): %s", winner.unkCount, winner.unkString)
+	if senatorCountGop > senatorCountDem {
+		logger("Final senator counts: GOP: %d, Dem: %d", senatorCountGop, senatorCountDem)
+	} else {
+		logger("Final senator counts: Dem: %d, GOP: %d", senatorCountDem, senatorCountGop)
+	}
 	fmt.Println()
 
 }
@@ -161,6 +167,8 @@ func pollStateResultEmit(stateCode string, totals *typeStateTotals, gopPctIncrem
 
 // appendWinner - Determine winner and add them to the appropriate slice.
 func appendWinner(winner *typeWinner, stateCode string, totals typeStateTotals) {
+	curSenatorRecord := senateMap[stateCode]
+
 	if totals.count < 1.0 {
 		return
 	}
@@ -168,13 +176,41 @@ func appendWinner(winner *typeWinner, stateCode string, totals typeStateTotals) 
 	if totals.dem > totals.gop && totals.dem > totals.ind && totals.dem > totals.unk {
 		winner.demString += stateCode + " "
 		winner.demCount += 1
+		if curSenatorRecord.holderA == "gop" && curSenatorRecord.upA == 1 {
+			senatorCountGop -= 1
+			senatorCountDem += 1
+			curSenatorRecord.upA = 0
+			senateMap[stateCode] = curSenatorRecord
+			return
+		}
+		if curSenatorRecord.holderA == "gop" && curSenatorRecord.upB == 1 {
+			senatorCountGop -= 1
+			senatorCountDem += 1
+			curSenatorRecord.upB = 0
+			senateMap[stateCode] = curSenatorRecord
+		}
 		return
 	}
+
 	if totals.gop > totals.dem && totals.gop > totals.ind && totals.gop > totals.unk {
 		winner.gopString += stateCode + " "
 		winner.gopCount += 1
+		if curSenatorRecord.holderA == "dem" && curSenatorRecord.upA == 1 {
+			senatorCountGop += 1
+			senatorCountDem -= 1
+			curSenatorRecord.upA = 0
+			senateMap[stateCode] = curSenatorRecord
+			return
+		}
+		if curSenatorRecord.holderA == "dem" && curSenatorRecord.upB == 1 {
+			senatorCountGop += 1
+			senatorCountDem -= 1
+			curSenatorRecord.upB = 0
+			senateMap[stateCode] = curSenatorRecord
+		}
 		return
 	}
+
 	if totals.ind > totals.gop && totals.ind > totals.dem && totals.ind > totals.unk {
 		winner.indString += stateCode + " "
 		winner.indCount += 1
@@ -190,11 +226,11 @@ func appendWinner(winner *typeWinner, stateCode string, totals typeStateTotals) 
 // loadCurrentSenate loads the current senate map.
 func loadCurrentSenate() {
 	buffer := make([]byte, 2048) // current size in storage: 950 bytes
-	senateMap := make(map[string]typeSenateRecord)
+	senateMap = make(map[string]typeSenateRecord)
 	var curSenateRecord typeSenateRecord
 	var strArray []string
 	var ix int
-	var bStateCode string
+	var stateCodeA, stateCodeB string
 
 	// Open the senate file.
 	fileHandle, err := os.Open(pathFileCurrentSenate)
@@ -215,25 +251,26 @@ func loadCurrentSenate() {
 	// Build the state-senator map.
 	for ix = 0; ix < len(strArray); ix++ {
 		// Process senator A.
-		ix, curSenateRecord.stateCode, curSenateRecord.holderA, curSenateRecord.upA = getSenateRecord(strArray, ix, len(strArray))
+		ix, stateCodeA, curSenateRecord.holderA, curSenateRecord.upA = getSenateRecord(strArray, ix, len(strArray))
 		if ix == -1 {
 			break
 		}
 
 		// Process senator B from the same state.
-		ix, bStateCode, curSenateRecord.holderB, curSenateRecord.upB = getSenateRecord(strArray, ix+1, len(strArray))
+		ix, stateCodeB, curSenateRecord.holderB, curSenateRecord.upB = getSenateRecord(strArray, ix+1, len(strArray))
 		if ix == -1 {
-			fatalText("loadCurrentSenate: state code (%s) has an entry for senator A but is missing an entry for senator B", curSenateRecord.stateCode)
+			fatalText("loadCurrentSenate: state code (%s) has an entry for senator A but is missing an entry for senator B", stateCodeA)
 		}
-		if bStateCode != curSenateRecord.stateCode {
-			fatalText("loadCurrentSenate: state code (%s) mismatch for senator B, expected: %s", bStateCode, curSenateRecord.stateCode)
+		if stateCodeB != stateCodeA {
+			fatalText("loadCurrentSenate: state code (%s) mismatch for senator B, expected: %s", stateCodeB, stateCodeA)
 		}
 
 		// Store this state's senator A&B map entry.
-		senateMap[curSenateRecord.stateCode] = curSenateRecord
+		senateMap[stateCodeA] = curSenateRecord
 	}
 
-	logger("loadCurrentSenate: %d current senate map entries", len(senateMap))
+	logger("loadCurrentSenate: Current senate map population: %d", len(senateMap))
+	logger("loadCurrentSenate: Current senator counts: GOP: %d, Dem: %d", senatorCountGop, senatorCountDem)
 }
 
 // getSenateRecord parses a senate record from the string array.
@@ -263,6 +300,11 @@ func getSenateRecord(strArray []string, jxStart, jxMax int) (int, string, string
 		}
 
 		// Return hit-index + data.
+		if holder == "gop" {
+			senatorCountGop++
+		} else {
+			senatorCountDem++
+		}
 		return jx, stateCode, holder, up
 	}
 
