@@ -51,7 +51,7 @@ func plotByState(stateCode string, startStamp string) {
 
 	// One history record: print a message and return.
 	if len(histories) < 2 {
-		logger("\tplotByState: Only 1 history record was found for state %s", stateCode)
+		logger("*** plotByState: Only 1 history record was found for state %s; will not plot", stateCode)
 		return
 	}
 

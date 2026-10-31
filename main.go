@@ -139,11 +139,13 @@ func main() {
 	} else {
 		startStamp = startTime.Format("2006-01-02_15:04:05")
 	}
-	var logFileName = fmt.Sprintf(funk + "_" + stateCode + "_%s.log", startStamp)
+	var logFileName = fmt.Sprintf(funk+"_"+stateCode+"_%s.log", startStamp)
 
 	// Open log file and defer closing.
 	openLogFile(PathDirLogs, logFileName)
 	defer closeLogFile()
+
+	// ------------------------------- Logging is now available ----------------------------------
 
 	// Fetch and show the program version.
 	versionBytes, err := os.ReadFile(PathVersionCfg)
@@ -153,6 +155,9 @@ func main() {
 	versionString = cleanerText(string(versionBytes), false)
 	versionString = strings.Trim(versionString, " ")
 	logger("%s %s", MyName, versionString)
+
+	// Load the current Senate composition.
+	loadCurrentSenate()
 
 	// Open database.
 	DBOpen(flagVerbose)

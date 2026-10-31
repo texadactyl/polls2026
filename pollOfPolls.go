@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
 const minEndMonth = 10
 
@@ -24,6 +28,19 @@ type typeWinner struct {
 	unkString string
 	unkCount  int64
 }
+
+// Current Senate records.
+type typeSenateRecord struct {
+	stateCode string // state code (E.g. AK for Alaska)
+	holderA   string // dem or gop
+	holderB   string // dem or gop
+	upA       int64  // Senator A up for re-election?
+	upB       int64  // Senator B up for re-election?
+}
+
+var senateMap map[string]typeSenateRecord
+
+const pathFileCurrentSenate = "current_senate.txt"
 
 // pollOfPolls - run a mock poll of polls on all the states that we have poll data for.
 // If stateCode is empty, run on all states; else run for only that state.
@@ -168,4 +185,64 @@ func appendWinner(winner *typeWinner, stateCode string, totals typeStateTotals) 
 	winner.unkString += stateCode + " "
 	winner.unkCount += 1
 
+}
+
+func loadCurrentSenate() {
+	buffer := make([]byte, 2048) // current size in storage: 950 bytes
+	senateMap := make(map[string]typeSenateRecord)
+	var curSenateRecord typeSenateRecord
+	var strArray []string
+	var ix int
+	var bStateCode string
+
+	// Open the senate file.
+	fileHandle, err := os.Open(pathFileCurrentSenate)
+	if err != nil {
+		fatalErr(err, "loadCurrentSenate: os.Open(%s) failed", pathFileCurrentSenate)
+	}
+	defer fileHandle.Close()
+
+	// Read all the bytes into a buffer.
+	num, err := fileHandle.Read(buffer)
+	if err != nil {
+		fatalErr(err, "loadCurrentSenate: fileHandle.Read(%s) failed", pathFileCurrentSenate)
+	}
+
+	// Trim then split all the records into a convenient string array.
+	strArray = strings.Split(strings.Trim(string(buffer[:num]), " "), "\n")
+
+	// Build the senate record array.
+	for ix = 0; ix < len(strArray); ix++ {
+		ix, curSenateRecord.stateCode, curSenateRecord.holderA, curSenateRecord.upA = getSenateRecord(strArray, ix, len(strArray))
+		if ix == -1 {
+			break
+		}
+		ix, bStateCode, curSenateRecord.holderB, curSenateRecord.upB = getSenateRecord(strArray, ix+1, len(strArray))
+		if bStateCode != curSenateRecord.stateCode {
+			fatalText("loadCurrentSenate: state code (%s) mismatch for senator B, expected: %s", bStateCode, curSenateRecord.stateCode)
+		}
+		senateMap[curSenateRecord.stateCode] = curSenateRecord
+	}
+	logger("loadCurrentSenate: %d current senate map entries", len(senateMap))
+}
+
+func getSenateRecord(strArray []string, jxStart, jxMax int) (int, string, string, int64) {
+	var jx int
+	var stateCode, holder string
+	var up int64
+	for jx = jxStart; jxStart < jxMax; jx++ {
+		if strArray[jx] == "-END-" {
+			return -1, "", "", -1
+		}
+		if strings.HasPrefix(strArray[jx], "#") || strings.TrimSpace(strArray[jx]) == "" {
+			continue
+		}
+		_, err := fmt.Sscanf(strArray[jx], "%s %s %d", &stateCode, &holder, &up)
+		if err != nil {
+			fatalErr(err, "getSenateRecord: fmt.Sscanf(%s) failed", strArray[jxStart])
+		}
+		return jx, stateCode, holder, up
+	}
+	fatalText("getSenateRecord: jx (%d) >= jxMax (%d); jxStart = %d", jx, jxMax, jxStart)
+	return -1, "", "", -1 // Never executed, just making the GoLang compiler happy.
 }
