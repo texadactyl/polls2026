@@ -187,6 +187,7 @@ func appendWinner(winner *typeWinner, stateCode string, totals typeStateTotals) 
 
 }
 
+// loadCurrentSenate loads the current senate map.
 func loadCurrentSenate() {
 	buffer := make([]byte, 2048) // current size in storage: 950 bytes
 	senateMap := make(map[string]typeSenateRecord)
@@ -211,38 +212,61 @@ func loadCurrentSenate() {
 	// Trim then split all the records into a convenient string array.
 	strArray = strings.Split(strings.Trim(string(buffer[:num]), " "), "\n")
 
-	// Build the senate record array.
+	// Build the state-senator map.
 	for ix = 0; ix < len(strArray); ix++ {
+		// Process senator A.
 		ix, curSenateRecord.stateCode, curSenateRecord.holderA, curSenateRecord.upA = getSenateRecord(strArray, ix, len(strArray))
 		if ix == -1 {
 			break
 		}
+
+		// Process senator B from the same state.
 		ix, bStateCode, curSenateRecord.holderB, curSenateRecord.upB = getSenateRecord(strArray, ix+1, len(strArray))
+		if ix == -1 {
+			fatalText("loadCurrentSenate: state code (%s) has an entry for senator A but is missing an entry for senator B", curSenateRecord.stateCode)
+		}
 		if bStateCode != curSenateRecord.stateCode {
 			fatalText("loadCurrentSenate: state code (%s) mismatch for senator B, expected: %s", bStateCode, curSenateRecord.stateCode)
 		}
+
+		// Store this state's senator A&B map entry.
 		senateMap[curSenateRecord.stateCode] = curSenateRecord
 	}
+
 	logger("loadCurrentSenate: %d current senate map entries", len(senateMap))
 }
 
+// getSenateRecord parses a senate record from the string array.
+// Start the scan from index jxStart.
+// Index value jxMax is the upper bound.
+// Skip over comment records.
+// Recognize end of array record (-END-).
 func getSenateRecord(strArray []string, jxStart, jxMax int) (int, string, string, int64) {
 	var jx int
 	var stateCode, holder string
 	var up int64
 	for jx = jxStart; jxStart < jxMax; jx++ {
+		// Hit end of array?
 		if strArray[jx] == "-END-" {
-			return -1, "", "", -1
+			return -1, "", "", -1 // Hit end of array.
 		}
+
+		// Comment or nil entry?
 		if strings.HasPrefix(strArray[jx], "#") || strings.TrimSpace(strArray[jx]) == "" {
-			continue
+			continue // YES
 		}
+
+		// Got a significant entry.
 		_, err := fmt.Sscanf(strArray[jx], "%s %s %d", &stateCode, &holder, &up)
 		if err != nil {
 			fatalErr(err, "getSenateRecord: fmt.Sscanf(%s) failed", strArray[jxStart])
 		}
+
+		// Return hit-index + data.
 		return jx, stateCode, holder, up
 	}
+
+	// Ran off the end of the array!
 	fatalText("getSenateRecord: jx (%d) >= jxMax (%d); jxStart = %d", jx, jxMax, jxStart)
 	return -1, "", "", -1 // Never executed, just making the GoLang compiler happy.
 }
